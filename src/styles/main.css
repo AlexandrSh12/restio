@@ -1,0 +1,99 @@
+body {
+    margin: 0;
+    font-family: sans-serif;
+    background-color: #f5f5f5;
+}
+
+.container {
+    padding: 16px;
+    padding-bottom: 100px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.dish-card {
+    background: white;
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.dish-card img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.dish-info {
+    margin-top: 6px;
+}
+
+.dish-name {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.dish-meta {
+    font-size: 12px;
+    color: gray;
+}
+
+.dish-price {
+    font-size: 14px;
+    margin-top: 4px;
+    font-weight: bold;
+    color: #ff6600;
+}
+
+.dish-old-price {
+    font-size: 12px;
+    color: #999;
+    text-decoration: line-through;
+    margin-left: 6px;
+}
+
+.counter {
+    margin-top: 8px;
+}
+
+.counter button {
+    background: #eee;
+    border: none;
+    padding: 4px 8px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.counter span {
+    margin: 0 6px;
+}
+
+.order-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
+    border-top: 1px solid #ddd;
+}
+
+.order-bar button {
+    background: #ffd600;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
