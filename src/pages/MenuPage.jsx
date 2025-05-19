@@ -1,42 +1,64 @@
-import { useState } from 'react';
-import { menu } from '../data/menu';
+import { useRef } from 'react';
+import { useOrder } from '../context/OrderContext';
 import DishCard from '../components/menu/DishCard';
+import OrderBar from '../components/menu/OrderBar';
+import { menu } from '../data/menu';
 
 export default function MenuPage() {
-    const [order, setOrder] = useState({});
+    const { draft, handleAdd } = useOrder();
+    const refs = useRef({});
+    const categories = [...new Set(menu.map(d => d.category))];
 
-    const handleAdd = (dish, count) => {
-        setOrder(prev => {
-            const updated = { ...prev };
-            if (count === 0) {
-                delete updated[dish.id];
-            } else {
-                updated[dish.id] = { ...dish, count };
-            }
-            return updated;
-        });
+    const scrollToCategory = category => {
+        const el = refs.current[category];
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
     };
-
-    const total = Object.values(order).reduce((sum, item) => sum + item.count * item.price, 0);
 
     return (
         <div>
-            <div className="container">
-                <h2>Меню</h2>
-                <div className="grid">
-                    {menu.map(dish => (
-                        <DishCard key={dish.id} dish={dish} onAdd={handleAdd} />
-                    ))}
-                </div>
+            {/* Категории */}
+            <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', padding: '12px 16px', background: '#fff' }}>
+                {categories.map(cat => (
+                    <button
+                        key={cat}
+                        onClick={() => scrollToCategory(cat)}
+                        style={{
+                            marginRight: '12px',
+                            padding: '6px 12px',
+                            background: '#eee',
+                            border: 'none',
+                            borderRadius: '20px',
+                            cursor: 'pointer',
+                            fontWeight: 500
+                        }}
+                    >
+                        {cat}
+                    </button>
+                ))}
             </div>
 
-            <div className="order-bar">
-                <div>
-                    <div style={{ fontSize: '12px', color: '#999' }}>45–55 мин</div>
-                    <div style={{ fontWeight: 'bold' }}>Заказ</div>
-                </div>
-                <button>Далее {total}₽</button>
+            {/* Список блюд по категориям */}
+            <div className="container">
+                {categories.map(cat => (
+                    <div key={cat} ref={el => (refs.current[cat] = el)} style={{ marginBottom: '24px' }}>
+                        <h3 style={{ marginBottom: '12px' }}>{cat}</h3>
+                        <div className="grid">
+                            {menu
+                                .filter(d => d.category === cat)
+                                .map(dish => (
+                                    <DishCard
+                                        key={dish.id}
+                                        dish={dish}
+                                        count={draft.items[dish.id]?.count || 0}
+                                        onAdd={handleAdd}
+                                    />
+                                ))}
+                        </div>
+                    </div>
+                ))}
             </div>
+
+            <OrderBar />
         </div>
     );
 }
