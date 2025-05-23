@@ -47,9 +47,23 @@ export default function LoginPage() {
             }
         } catch (err) {
             console.error('Ошибка авторизации:', err);
-            setError('Неверный логин или пароль');
-        } finally {
-            setLoading(false);
+
+            if (err.response) {
+                // Сервер ответил, но с ошибкой (например, 401 или 404)
+                if (err.response.status === 401) {
+                    setError('Неверный логин или пароль');
+                } else if (err.response.status === 404) {
+                    setError('Пользователь не найден');
+                } else {
+                    setError(`Ошибка: ${err.response.data?.message || 'Что-то пошло не так на сервере'}`);
+                }
+            } else if (err.request) {
+                // Запрос был отправлен, но нет ответа (например, нет интернета или сервер не работает)
+                setError('Нет связи с сервером. Проверьте подключение к интернету.');
+            } else {
+                // Что-то ещё пошло не так при настройке запроса
+                setError('Произошла ошибка при попытке входа. Попробуйте ещё раз.');
+            }
         }
     };
 

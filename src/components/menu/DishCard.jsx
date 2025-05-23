@@ -24,7 +24,7 @@ export default function DishCard({ dish }) {
 
     return (
         <div className="dish-card">
-            <img src={dish.image} alt={dish.name} />
+            <img src={`http://localhost:8080${dish.imageUrl}`} alt={dish.name} />
             <div className="dish-info">
                 <div className="dish-name">{dish.name}</div>
                 <div className="dish-meta">{dish.weight} · {dish.kcal} ккал</div>
