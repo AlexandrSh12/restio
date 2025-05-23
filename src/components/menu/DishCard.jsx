@@ -1,18 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useOrder } from '../../context/OrderContext.jsx';
 
-export default function DishCard({ dish, onAdd }) {
-    const [count, setCount] = useState(0);
+export default function DishCard({ dish }) {
+    const { draft, handleAdd } = useOrder();
+    const [count, setCount] = useState(draft.items[dish.id]?.count || 0);
+
+    // Синхронизация count с контекстом при изменении draft
+    useEffect(() => {
+        setCount(draft.items[dish.id]?.count || 0);
+    }, [draft.items, dish.id]);
 
     const increment = () => {
         const newCount = count + 1;
         setCount(newCount);
-        onAdd(dish, newCount);
+        handleAdd(dish, newCount);
     };
 
     const decrement = () => {
         const newCount = Math.max(count - 1, 0);
         setCount(newCount);
-        onAdd(dish, newCount);
+        handleAdd(dish, newCount);
     };
 
     return (

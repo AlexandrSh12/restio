@@ -8,24 +8,33 @@ export function OrderProvider({ children }) {
     const [draft, setDraft] = useLocalStorage('restioOrder', {
         id: uuidv4(),
         items: {},
-        status: 'draft'
+        status: 'draft',
+        createdAt: new Date().toISOString()
     });
 
-// Reset to new draft after sending
+    // Reset to new draft after sending
     const clearOrder = () => {
-        setDraft({ id: uuidv4(), items: {}, status: 'draft' });
+        setDraft({
+            id: uuidv4(),
+            items: {},
+            status: 'draft',
+            createdAt: new Date().toISOString()
+        });
     };
 
     const handleAdd = (dish, count) => {
         setDraft(prev => {
             const items = { ...prev.items };
-            if (count === 0) delete items[dish.id];
-            else items[dish.id] = { ...dish, count };
+            if (count === 0) {
+                delete items[dish.id];
+            } else {
+                items[dish.id] = { ...dish, count };
+            }
             return { ...prev, items };
         });
     };
 
-    const total = Object.values(draft.items).reduce(
+    const total = Object.values(draft?.items || {}).reduce(
         (sum, item) => sum + item.count * item.price,
         0
     );
@@ -34,6 +43,7 @@ export function OrderProvider({ children }) {
         <OrderContext.Provider
             value={{
                 draft,
+                setDraft,
                 handleAdd,
                 clearOrder,
                 total

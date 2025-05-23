@@ -1,10 +1,13 @@
 // src/components/menu/OrderBar.jsx
 import { useNavigate } from 'react-router-dom';
-import {useOrder} from "../../context/OrderContext.jsx";
+import { useOrder } from "../../context/OrderContext.jsx";
 
-export default function OrderBar({ order }) {
+export default function OrderBar() {
     const navigate = useNavigate();
-    const items = Object.values(order); // [{ id, name, price, count, cookTime }, ...]
+    const { draft } = useOrder();
+
+    // Получаем массив блюд из контекста
+    const items = Object.values(draft?.items || {});
 
     // === DEBUG LOGS ===
     console.log('Order items raw:', items);
@@ -28,14 +31,12 @@ export default function OrderBar({ order }) {
 
     const minTime = Math.min(...cookTimes);
     const maxTime = Math.max(...cookTimes);
-    const { draft, clearOrder } = useOrder();
 
-    const total = Object.values(draft?.items || {}).reduce(
+    // Рассчитываем общую сумму заказа
+    const total = items.reduce(
         (sum, item) => sum + item.count * item.price,
         0
     );
-
-
 
     return (
         <div className="order-bar">
@@ -47,7 +48,7 @@ export default function OrderBar({ order }) {
                 </div>
                 <div style={{ fontWeight: 'bold' }}>Заказ</div>
             </div>
-            <button onClick={() => navigate('/confirm', { state: { order } })}>
+            <button onClick={() => navigate('/confirm')}>
                 Далее {total}₽
             </button>
         </div>

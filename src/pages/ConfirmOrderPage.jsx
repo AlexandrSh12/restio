@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { useOrder } from '../context/OrderContext';
-import axios from 'axios';
+import { createOrder } from '../api/orders';
 import { useNavigate } from 'react-router-dom';
 
 export default function ConfirmOrderPage() {
-    const { draft, clearOrder } = useOrder();
+    const { draft, clearOrder, total } = useOrder();
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            const res = await axios.post('/api/orders', {
+            const res = await createOrder({
                 clientId: draft.id,
                 items: Object.values(draft.items)
             });
@@ -43,9 +43,12 @@ export default function ConfirmOrderPage() {
                 <ul style={{ marginBottom: '20px' }}>
                     {items.map(item => (
                         <li key={item.id}>
-                            {item.name} × {item.count}
+                            {item.name} × {item.count} = {item.price * item.count}₽
                         </li>
                     ))}
+                    <li style={{ fontWeight: 'bold', marginTop: '10px' }}>
+                        Итого: {total}₽
+                    </li>
                 </ul>
             )}
             <button
