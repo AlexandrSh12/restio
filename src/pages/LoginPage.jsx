@@ -40,7 +40,7 @@ export default function LoginPage() {
                     navigate('/kitchen');
                     break;
                 case 'ADMIN':
-                    navigate('/admin');
+                    navigate('/menu');
                     break;
                 default:
                     navigate('/menu');

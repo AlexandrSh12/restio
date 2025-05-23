@@ -1,8 +1,10 @@
+// src/App.jsx (обновленная версия)
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import MenuPage from './pages/MenuPage';
 import ConfirmOrderPage from './pages/ConfirmOrderPage';
 import SuccessPage from './pages/SuccessPage';
 import LoginPage from './pages/LoginPage';
+import AdminPage from './pages/AdminPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { OrderProvider } from "./context/OrderContext.jsx";
 
@@ -14,16 +16,16 @@ function App() {
                     {/* Публичный маршрут для входа */}
                     <Route path="/login" element={<LoginPage />} />
 
-                    {/* Защищенные маршруты */}
+                    {/* Защищенные маршруты для официантов и админов */}
                     <Route path="/" element={
                         <ProtectedRoute allowedRoles={['WAITER', 'ADMIN']}>
                             <MenuPage />
                         </ProtectedRoute>
                     } />
                     <Route path="/menu" element={
-
+                        <ProtectedRoute allowedRoles={['WAITER', 'ADMIN']}>
                             <MenuPage />
-
+                        </ProtectedRoute>
                     } />
                     <Route path="/confirm" element={
                         <ProtectedRoute allowedRoles={['WAITER', 'ADMIN']}>
@@ -33,6 +35,13 @@ function App() {
                     <Route path="/success" element={
                         <ProtectedRoute allowedRoles={['WAITER', 'ADMIN']}>
                             <SuccessPage />
+                        </ProtectedRoute>
+                    } />
+
+                    {/* Маршрут только для администраторов */}
+                    <Route path="/admin" element={
+                        <ProtectedRoute allowedRoles={['ADMIN']}>
+                            <AdminPage />
                         </ProtectedRoute>
                     } />
 
