@@ -1,10 +1,15 @@
 // src/components/menu/OrderBar.jsx
 import { useNavigate } from 'react-router-dom';
 import { useOrder } from "../../context/OrderContext.jsx";
+import { useState } from "react";
+import { FiRotateCcw } from "react-icons/fi"; // импорт иконки
+
+
 
 export default function OrderBar() {
     const navigate = useNavigate();
-    const { draft } = useOrder();
+    const { draft, setDraft } = useOrder(); // setDraft нужен для сброса
+    const [showConfirm, setShowConfirm] = useState(false);
 
     // Получаем массив блюд из контекста
     const items = Object.values(draft?.items || {});
@@ -37,6 +42,11 @@ export default function OrderBar() {
         (sum, item) => sum + item.count * item.price,
         0
     );
+    const handleReset = () => {
+        localStorage.removeItem("order"); // Удаляем из localStorage
+        setDraft({ items: {} }); // Обнуляем в контексте
+        setShowConfirm(false); // Закрываем окно
+    };
 
     return (
         <div className="order-bar">
@@ -48,9 +58,30 @@ export default function OrderBar() {
                 </div>
                 <div style={{ fontWeight: 'bold' }}>Заказ</div>
             </div>
-            <button onClick={() => navigate('/confirm')}>
-                Далее {total}₽
-            </button>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <button
+                    onClick={() => setShowConfirm(true)}
+                    title="Сбросить заказ"
+
+                >
+                    <FiRotateCcw />
+                </button>
+
+                <button onClick={() => navigate('/confirm')}>
+                    Далее {total}₽
+                </button>
+            </div>
+            {showConfirm && (
+                <div className="modal-backdrop">
+                    <div className="modal">
+                        <p>Вы уверены, что хотите сбросить заказ?</p>
+                        <div className="modal-buttons">
+                            <button onClick={() => setShowConfirm(false)}>Отмена</button>
+                            <button onClick={handleReset}>Сбросить</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
