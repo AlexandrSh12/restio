@@ -14,7 +14,7 @@ import {
 import { fetchDishes } from '../../api/dishes.js';
 import '../../styles/pages/admin.css';
 import { fetchAdminData } from '../../api/admin/admin';
-import { useLocalStorage } from "../hooks/useLocalStorage.js";
+import { useLocalStorage } from "../../hooks/useLocalStorage.js";
 
 export default function AdminPage() {
     const [activeTab, setActiveTab] = useState('categories');

@@ -7,6 +7,7 @@ import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/admin/AdminPage.jsx';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { OrderProvider } from "./context/OrderContext.jsx";
+import ChefPage from "./pages/ChefPage.jsx";
 
 function App() {
     return (
@@ -35,6 +36,11 @@ function App() {
                     <Route path="/success" element={
                         <ProtectedRoute allowedRoles={['WAITER', 'ADMIN']}>
                             <SuccessPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/chef" element={
+                        <ProtectedRoute allowedRoles={['WAITER', 'ADMIN', 'CHEF']}>
+                            <ChefPage/>
                         </ProtectedRoute>
                     } />
 
