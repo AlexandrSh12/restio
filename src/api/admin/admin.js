@@ -6,6 +6,10 @@ export const fetchCategories = () => {
     return axiosClient.get('/admin/categories');
 };
 
+export const fetchAdminData = () => {
+    return axiosClient.get('/admin'); // автоматически подставит токен
+};
+
 export const createCategory = (categoryData) => {
     return axiosClient.post('/admin/categories', categoryData);
 };
