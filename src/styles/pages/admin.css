@@ -1,0 +1,171 @@
+/* === АДМИН ПАНЕЛЬ === */
+.admin-container {
+    padding: var(--spacing-lg);
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.admin-container h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: var(--spacing-xl);
+    text-align: center;
+    color: var(--text-primary);
+}
+
+.admin-tabs {
+    display: flex;
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius-sm);
+    padding: 4px;
+    margin-bottom: var(--spacing-xl);
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.admin-tabs button {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.admin-tabs button.active {
+    background: var(--bg-primary);
+    color: var(--primary-color);
+    box-shadow: 0 2px 8px var(--shadow-light);
+}
+
+.admin-section h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: var(--spacing-lg);
+}
+
+.admin-form {
+    background: var(--bg-primary);
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: 0 4px 12px var(--shadow-light);
+    display: grid;
+    gap: var(--spacing-md);
+}
+
+@media (min-width: 768px) {
+    .dish-form {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .dish-form textarea,
+    .dish-form input[type="file"],
+    .dish-form button {
+        grid-column: 1 / -1;
+    }
+}
+
+.admin-form input,
+.admin-form select,
+.admin-form textarea {
+    padding: 12px var(--spacing-md);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    font-size: 14px;
+    transition: border-color var(--transition-fast);
+}
+
+.admin-form input:focus,
+.admin-form select:focus,
+.admin-form textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.admin-form textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.categories-list,
+.dishes-list {
+    display: grid;
+    gap: var(--spacing-md);
+}
+
+@media (min-width: 768px) {
+    .dishes-list {
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    }
+}
+
+.category-item,
+.dish-item {
+    background: var(--bg-primary);
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px var(--shadow-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+}
+
+.dish-item {
+    flex-direction: column;
+}
+
+.dish-item img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.dish-info h3,
+.category-item h3 {
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.dish-info p,
+.category-item p {
+    margin: 0 0 var(--spacing-xs) 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.category-actions,
+.dish-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+    flex-shrink: 0;
+}
+
+.dish-actions {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: auto;
+}
+
+/* Наследуем стили .admin-tabs button, но с акцентным цветом */
+.admin-form button[type="submit"] {
+    flex: 1;
+    padding: var(--spacing-md);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    background: var(--primary-color);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    width: 100%;
+    margin-top: var(--spacing-md);
+}
+

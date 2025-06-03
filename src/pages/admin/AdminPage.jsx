@@ -1,5 +1,6 @@
 // src/pages/AdminPage.jsx
 import { useState, useEffect } from 'react';
+import AppHeader from '../../components/common/AppHeader.jsx';
 import {
     fetchCategories,
     createCategory,
@@ -9,8 +10,9 @@ import {
     updateDish,
     deleteDish,
     uploadImage
-} from '../api/admin';
-import { fetchDishes } from '../api/dishes';
+} from '../../api/admin/admin.js';
+import { fetchDishes } from '../../api/dishes.js';
+import '../../styles/pages/admin.css';
 
 export default function AdminPage() {
     const [activeTab, setActiveTab] = useState('categories');
@@ -165,6 +167,7 @@ export default function AdminPage() {
 
     return (
         <div className="admin-container">
+            <AppHeader showSearch={false} /> {/* ← Поиск скрыт */}
             <h1>Панель администратора</h1>
 
             {error && <div className="error-message">{error}</div>}

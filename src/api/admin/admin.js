@@ -1,5 +1,5 @@
 // src/api/admin.js
-import axiosClient from './axiosClient';
+import axiosClient from '../axiosClient.js';
 
 // Категории
 export const fetchCategories = () => {

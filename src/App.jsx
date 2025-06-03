@@ -4,7 +4,7 @@ import MenuPage from './pages/MenuPage';
 import ConfirmOrderPage from './pages/ConfirmOrderPage';
 import SuccessPage from './pages/SuccessPage';
 import LoginPage from './pages/LoginPage';
-import AdminPage from './pages/AdminPage';
+import AdminPage from './pages/admin/AdminPage.jsx';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { OrderProvider } from "./context/OrderContext.jsx";
 
