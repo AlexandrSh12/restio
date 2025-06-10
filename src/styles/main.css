@@ -228,32 +228,7 @@ body {
     margin-bottom: var(--spacing-md);
 }
 
-.burger-btn {
-    background: none;
-    border: none;
-    padding: var(--spacing-sm);
-    cursor: pointer;
-    border-radius: var(--border-radius-sm);
-    transition: background var(--transition-fast);
-}
 
-.burger-btn:hover {
-    background: var(--bg-tertiary);
-}
-
-.burger-lines {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-
-.burger-lines span {
-    width: 20px;
-    height: 2px;
-    background: var(--text-primary);
-    border-radius: 1px;
-    transition: all var(--transition-fast);
-}
 
 .header-actions {
     display: flex;
