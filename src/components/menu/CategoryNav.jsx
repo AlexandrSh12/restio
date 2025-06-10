@@ -1,5 +1,6 @@
 // src/components/menu/CategoryNav.jsx
 import { useEffect, useRef, useState } from 'react';
+import '../../styles/components/categorynav.css';
 
 export default function CategoryNav({
                                         categories,
@@ -42,8 +43,16 @@ export default function CategoryNav({
     };
 
     const handleCategoryClick = (category, index) => {
+        console.log('CategoryNav: клик по категории', category);
+
         setActiveCategoryIndex(index);
-        onCategoryClick(category);
+
+        // Вызываем родительский обработчик
+        if (onCategoryClick) {
+            onCategoryClick(category);
+        } else {
+            console.log('CategoryNav: onCategoryClick не передан!');
+        }
     };
 
     return (

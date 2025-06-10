@@ -1,4 +1,4 @@
-// src/pages/MenuPage.jsx (обновленная версия)
+// src/pages/MenuPage.jsx (исправленная версия)
 import { useRef, useState, useEffect } from 'react';
 import { useOrder } from '../context/OrderContext';
 import DishCard from '../components/menu/DishCard';
@@ -22,6 +22,7 @@ export default function MenuPage() {
     const [activeCategory, setActiveCategory] = useState('');
     const [isHeaderSticky, setIsHeaderSticky] = useState(false);
     const [bannersVisible, setBannersVisible] = useState(true);
+    const [isScrollingProgrammatically, setIsScrollingProgrammatically] = useState(false);
 
     const containerRef = useRef(null);
     const headerRef = useRef(null);
@@ -58,7 +59,7 @@ export default function MenuPage() {
     // Обработка скролла для sticky header и определения активной категории
     useEffect(() => {
         const handleScroll = () => {
-            if (!containerRef.current) return;
+            if (!containerRef.current || isScrollingProgrammatically) return;
 
             const scrollTop = containerRef.current.scrollTop;
             const headerHeight = headerRef.current?.offsetHeight || 0;
@@ -95,18 +96,41 @@ export default function MenuPage() {
             container.addEventListener('scroll', handleScroll);
             return () => container.removeEventListener('scroll', handleScroll);
         }
-    }, [categories, activeCategory]);
+    }, [categories, activeCategory, isScrollingProgrammatically]);
 
     const scrollToCategory = (category) => {
-        const element = refs.current[category];
-        if (element && containerRef.current) {
-            const headerHeight = headerRef.current?.offsetHeight || 0;
-            const elementTop = element.offsetTop - headerHeight - 20;
+        console.log('Клик по категории:', category);
 
-            containerRef.current.scrollTo({
-                top: elementTop,
+        const element = refs.current[category];
+        const container = containerRef.current;
+
+        console.log('Element найден:', !!element);
+        console.log('Container найден:', !!container);
+
+        if (element && container) {
+            // Устанавливаем флаг программного скролла
+            setIsScrollingProgrammatically(true);
+
+            // Сразу обновляем активную категорию
+            setActiveCategory(category);
+
+            // Получаем позицию элемента относительно скроллируемого контейнера
+            const elementOffsetTop = element.offsetTop;
+
+            console.log('Позиция элемента:', elementOffsetTop);
+
+            // Скроллим так, чтобы категория была в самом верху контента
+            container.scrollTo({
+                top: elementOffsetTop - (headerRef.current?.offsetHeight || 250),
                 behavior: 'smooth'
             });
+
+            // Сбрасываем флаг после завершения скролла
+            setTimeout(() => {
+                setIsScrollingProgrammatically(false);
+            }, 800);
+        } else {
+            console.log('Не удалось найти элемент или контейнер для скролла');
         }
     };
 
@@ -124,8 +148,8 @@ export default function MenuPage() {
     }
 
     return (
-        <div className="menu-container" ref={containerRef}>
-            {/* Заголовок с навигацией */}
+        <div className="menu-container">
+            {/* Заголовок с навигацией - фиксированный */}
             <div
                 ref={headerRef}
                 className={`menu-header-wrapper ${isHeaderSticky ? 'sticky' : ''}`}
@@ -147,37 +171,40 @@ export default function MenuPage() {
                 )}
             </div>
 
-            {/* Контент в зависимости от активной вкладки */}
-            {activeTab === 'create' ? (
-                <div className="menu-content">
-                    {/* Список блюд по категориям */}
-                    {categories.map(category => (
-                        <div
-                            key={category}
-                            ref={el => (refs.current[category] = el)}
-                            className="category-section"
-                        >
-                            <h3 className="category-title">{category}</h3>
-                            <div className="dishes-grid">
-                                {menu
-                                    .filter(dish => dish.category === category)
-                                    .map(dish => (
-                                        <DishCard
-                                            key={dish.id}
-                                            dish={dish}
-                                            count={draft.items[dish.id]?.count || 0}
-                                            onAdd={handleAdd}
-                                        />
-                                    ))}
+            {/* Скроллируемый контент */}
+            <div className="menu-scrollable-content" ref={containerRef}>
+                {/* Контент в зависимости от активной вкладки */}
+                {activeTab === 'create' ? (
+                    <div className="menu-content">
+                        {/* Список блюд по категориям */}
+                        {categories.map(category => (
+                            <div
+                                key={category}
+                                ref={el => (refs.current[category] = el)}
+                                className="category-section"
+                            >
+                                <h3 className="category-title">{category}</h3>
+                                <div className="dishes-grid">
+                                    {menu
+                                        .filter(dish => dish.category === category)
+                                        .map(dish => (
+                                            <DishCard
+                                                key={dish.id}
+                                                dish={dish}
+                                                count={draft.items[dish.id]?.count || 0}
+                                                onAdd={handleAdd}
+                                            />
+                                        ))}
+                                </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <div className="orders-content">
-                    <OrdersPage />
-                </div>
-            )}
+                        ))}
+                    </div>
+                ) : (
+                    <div className="orders-content">
+                        <OrdersPage />
+                    </div>
+                )}
+            </div>
 
             {/* Панель заказа - показываем только при создании заказа */}
             {activeTab === 'create' && <OrderBar />}
