@@ -5,15 +5,16 @@ import {
     fetchCategories,
     createCategory,
     updateCategory,
-    deleteCategory,
+    deleteCategory
+} from '../../api/admin/categories.js';
+import {
+    fetchDishes,
     createDish,
     updateDish,
     deleteDish,
-    uploadImage
-} from '../../api/admin/admin.js';
-import { fetchDishes } from '../../api/dishes.js';
+    uploadDishImage
+} from '../../api/dishes.js';
 import '../../styles/pages/admin.css';
-import { fetchAdminData } from '../../api/admin/admin';
 import { useLocalStorage } from "../../hooks/useLocalStorage.js";
 
 export default function AdminPage() {
@@ -29,12 +30,9 @@ export default function AdminPage() {
         name: '',
         category: '',
         price: '',
-        oldPrice: '',
-        weight: '',
-        kcal: '',
         cookTime: '',
         description: '',
-        image: ''
+        imageUrl: ''
     });
 
     // Состояния редактирования
@@ -48,14 +46,16 @@ export default function AdminPage() {
     const loadData = async () => {
         try {
             setLoading(true);
+            setError(null);
             const [categoriesRes, dishesRes] = await Promise.all([
                 fetchCategories(),
                 fetchDishes()
             ]);
-            setCategories(categoriesRes.data);
-            setDishes(dishesRes.data);
+            // Предполагаем, что API возвращает данные напрямую, а не в поле data
+            setCategories(Array.isArray(categoriesRes) ? categoriesRes : categoriesRes.data || []);
+            setDishes(Array.isArray(dishesRes) ? dishesRes : dishesRes.data || []);
         } catch (err) {
-            setError('Ошибка загрузки данных');
+            setError('Ошибка загрузки данных: ' + (err.message || 'Неизвестная ошибка'));
             console.error(err);
         } finally {
             setLoading(false);
@@ -65,7 +65,13 @@ export default function AdminPage() {
     // Категории
     const handleCategorySubmit = async (e) => {
         e.preventDefault();
+        if (!categoryForm.name.trim()) {
+            setError('Название категории обязательно');
+            return;
+        }
+
         try {
+            setError(null);
             if (editingCategory) {
                 await updateCategory(editingCategory.id, categoryForm);
                 setEditingCategory(null);
@@ -73,24 +79,40 @@ export default function AdminPage() {
                 await createCategory(categoryForm);
             }
             setCategoryForm({ name: '', description: '' });
-            loadData();
+            await loadData();
         } catch (err) {
-            setError('Ошибка сохранения категории');
+            if (err.response?.status === 409) {
+                setError('Категория с таким названием уже существует');
+            } else if (err.response?.status === 403) {
+                setError('Нет прав для выполнения операции');
+            } else {
+                setError('Ошибка сохранения категории: ' + (err.message || 'Неизвестная ошибка'));
+            }
         }
     };
 
     const handleCategoryEdit = (category) => {
         setEditingCategory(category);
         setCategoryForm({ name: category.name, description: category.description || '' });
+        setError(null);
     };
 
     const handleCategoryDelete = async (categoryId) => {
-        if (confirm('Удалить категорию?')) {
-            try {
-                await deleteCategory(categoryId);
-                loadData();
-            } catch (err) {
-                setError('Ошибка удаления категории');
+        if (!confirm('Удалить категорию? Это действие нельзя отменить.')) {
+            return;
+        }
+
+        try {
+            setError(null);
+            await deleteCategory(categoryId);
+            await loadData();
+        } catch (err) {
+            if (err.response?.status === 403) {
+                setError('Нет прав для удаления категории');
+            } else if (err.response?.status === 404) {
+                setError('Категория не найдена');
+            } else {
+                setError('Ошибка удаления категории: ' + (err.message || 'Неизвестная ошибка'));
             }
         }
     };
@@ -98,13 +120,34 @@ export default function AdminPage() {
     // Блюда
     const handleDishSubmit = async (e) => {
         e.preventDefault();
+
+        // Валидация
+        if (!dishForm.name.trim()) {
+            setError('Название блюда обязательно');
+            return;
+        }
+        if (!dishForm.category) {
+            setError('Категория обязательна');
+            return;
+        }
+        if (!dishForm.price || parseFloat(dishForm.price) <= 0) {
+            setError('Цена должна быть больше 0');
+            return;
+        }
+        if (!dishForm.cookTime || parseInt(dishForm.cookTime) <= 0) {
+            setError('Время приготовления должно быть больше 0');
+            return;
+        }
+
         try {
+            setError(null);
             const dishData = {
-                ...dishForm,
+                name: dishForm.name.trim(),
+                category: dishForm.category,
                 price: parseFloat(dishForm.price),
-                oldPrice: dishForm.oldPrice ? parseFloat(dishForm.oldPrice) : null,
-                kcal: parseInt(dishForm.kcal),
-                cookTime: parseInt(dishForm.cookTime)
+                cookTime: parseInt(dishForm.cookTime),
+                description: dishForm.description.trim(),
+                imageUrl: dishForm.imageUrl.trim()
             };
 
             if (editingDish) {
@@ -113,20 +156,24 @@ export default function AdminPage() {
             } else {
                 await createDish(dishData);
             }
+
             setDishForm({
                 name: '',
                 category: '',
                 price: '',
-                oldPrice: '',
-                weight: '',
-                kcal: '',
                 cookTime: '',
                 description: '',
-                image: ''
+                imageUrl: ''
             });
-            loadData();
+            await loadData();
         } catch (err) {
-            setError('Ошибка сохранения блюда');
+            if (err.response?.status === 403) {
+                setError('Нет прав для выполнения операции');
+            } else if (err.response?.status === 400) {
+                setError('Некорректные данные блюда');
+            } else {
+                setError('Ошибка сохранения блюда: ' + (err.message || 'Неизвестная ошибка'));
+            }
         }
     };
 
@@ -136,56 +183,97 @@ export default function AdminPage() {
             name: dish.name,
             category: dish.category,
             price: dish.price.toString(),
-            oldPrice: dish.oldPrice ? dish.oldPrice.toString() : '',
-            weight: dish.weight,
-            kcal: dish.kcal.toString(),
             cookTime: dish.cookTime.toString(),
             description: dish.description || '',
-            image: dish.image || ''
+            imageUrl: dish.imageUrl || ''
         });
+        setError(null);
     };
 
     const handleDishDelete = async (dishId) => {
-        if (confirm('Удалить блюдо?')) {
-            try {
-                await deleteDish(dishId);
-                loadData();
-            } catch (err) {
-                setError('Ошибка удаления блюда');
+        if (!confirm('Удалить блюдо? Это действие нельзя отменить.')) {
+            return;
+        }
+
+        try {
+            setError(null);
+            await deleteDish(dishId);
+            await loadData();
+        } catch (err) {
+            if (err.response?.status === 403) {
+                setError('Нет прав для удаления блюда');
+            } else if (err.response?.status === 404) {
+                setError('Блюдо не найдено');
+            } else {
+                setError('Ошибка удаления блюда: ' + (err.message || 'Неизвестная ошибка'));
             }
         }
     };
 
     const handleImageUpload = async (file) => {
-        try {
-            const response = await uploadImage(file);
-            setDishForm(prev => ({ ...prev, image: response.data.url }));
-        } catch (err) {
-            setError('Ошибка загрузки изображения');
+        if (!file) return;
+
+        // Проверяем размер файла (например, максимум 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            setError('Размер файла не должен превышать 5MB');
+            return;
         }
+
+        try {
+            setError(null);
+            const response = await uploadDishImage(file);
+            const imageUrl = response.imageUrl || response.data?.imageUrl || response.url || response.data?.url;
+            setDishForm(prev => ({ ...prev, imageUrl }));
+        } catch (err) {
+            setError('Ошибка загрузки изображения: ' + (err.message || 'Неизвестная ошибка'));
+        }
+    };
+
+    const cancelCategoryEdit = () => {
+        setEditingCategory(null);
+        setCategoryForm({ name: '', description: '' });
+        setError(null);
+    };
+
+    const cancelDishEdit = () => {
+        setEditingDish(null);
+        setDishForm({
+            name: '',
+            category: '',
+            price: '',
+            cookTime: '',
+            description: '',
+            imageUrl: ''
+        });
+        setError(null);
     };
 
     if (loading) return <div className="admin-container">Загрузка...</div>;
 
     return (
         <div className="admin-container">
-            <AppHeader showSearch={false} /> {/* ← Поиск скрыт */}
+            <AppHeader showSearch={false} />
             <h1>Панель администратора</h1>
 
-            {error && <div className="error-message">{error}</div>}
+            {error && (
+                <div className="error-message">
+                    {error}
+                    <button onClick={() => setError(null)}>✕</button>
+                </div>
+            )}
 
             <div className="admin-tabs">
                 <button
                     className={activeTab === 'categories' ? 'active' : ''}
                     onClick={() => setActiveTab('categories')}
                 >
-                    Категории
+                    Категории ({categories.length})
                 </button>
                 <button
                     className={activeTab === 'dishes' ? 'active' : ''}
                     onClick={() => setActiveTab('dishes')}
                 >
-                    Блюда
+                    Блюда ({dishes.length})
                 </button>
             </div>
 
@@ -200,43 +288,53 @@ export default function AdminPage() {
                             value={categoryForm.name}
                             onChange={(e) => setCategoryForm(prev => ({ ...prev, name: e.target.value }))}
                             required
+                            maxLength={100}
                         />
-                        <input
-                            type="text"
+                        <textarea
                             placeholder="Описание (опционально)"
                             value={categoryForm.description}
                             onChange={(e) => setCategoryForm(prev => ({ ...prev, description: e.target.value }))}
+                            maxLength={500}
                         />
-                        <button type="submit">
-                            {editingCategory ? 'Обновить' : 'Добавить'} категорию
-                        </button>
-                        {editingCategory && (
-                            <button type="button" onClick={() => {
-                                setEditingCategory(null);
-                                setCategoryForm({ name: '', description: '' });
-                            }}>
-                                Отмена
+                        <div className="form-actions">
+                            <button type="submit">
+                                {editingCategory ? 'Обновить' : 'Добавить'} категорию
                             </button>
-                        )}
+                            {editingCategory && (
+                                <button type="button" onClick={cancelCategoryEdit}>
+                                    Отмена
+                                </button>
+                            )}
+                        </div>
                     </form>
 
                     <div className="categories-list">
-                        {categories.map(category => (
-                            <div key={category.id} className="category-item">
-                                <div>
-                                    <h3>{category.name}</h3>
-                                    <p>{category.description}</p>
+                        {categories.length === 0 ? (
+                            <p>Категории не найдены</p>
+                        ) : (
+                            categories.map(category => (
+                                <div key={category.id} className="category-item">
+                                    <div>
+                                        <h3>{category.name}</h3>
+                                        {category.description && <p>{category.description}</p>}
+                                    </div>
+                                    <div className="category-actions">
+                                        <button
+                                            onClick={() => handleCategoryEdit(category)}
+                                            disabled={editingCategory?.id === category.id}
+                                        >
+                                            Редактировать
+                                        </button>
+                                        <button
+                                            onClick={() => handleCategoryDelete(category.id)}
+                                            className="delete-btn"
+                                        >
+                                            Удалить
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="category-actions">
-                                    <button onClick={() => handleCategoryEdit(category)}>
-                                        Редактировать
-                                    </button>
-                                    <button onClick={() => handleCategoryDelete(category.id)}>
-                                        Удалить
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
                 </div>
             )}
@@ -252,6 +350,7 @@ export default function AdminPage() {
                             value={dishForm.name}
                             onChange={(e) => setDishForm(prev => ({ ...prev, name: e.target.value }))}
                             required
+                            maxLength={100}
                         />
 
                         <select
@@ -267,54 +366,35 @@ export default function AdminPage() {
 
                         <input
                             type="number"
-                            placeholder="Цена"
+                            placeholder="Цена (руб.)"
                             value={dishForm.price}
                             onChange={(e) => setDishForm(prev => ({ ...prev, price: e.target.value }))}
                             required
+                            min="1"
+                            step="0.01"
                         />
 
                         <input
                             type="number"
-                            placeholder="Старая цена (опционально)"
-                            value={dishForm.oldPrice}
-                            onChange={(e) => setDishForm(prev => ({ ...prev, oldPrice: e.target.value }))}
-                        />
-
-                        <input
-                            type="text"
-                            placeholder="Вес (например, 250г)"
-                            value={dishForm.weight}
-                            onChange={(e) => setDishForm(prev => ({ ...prev, weight: e.target.value }))}
-                            required
-                        />
-
-                        <input
-                            type="number"
-                            placeholder="Калории"
-                            value={dishForm.kcal}
-                            onChange={(e) => setDishForm(prev => ({ ...prev, kcal: e.target.value }))}
-                            required
-                        />
-
-                        <input
-                            type="number"
-                            placeholder="Время приготовления (мин)"
+                            placeholder="Время приготовления (мин.)"
                             value={dishForm.cookTime}
                             onChange={(e) => setDishForm(prev => ({ ...prev, cookTime: e.target.value }))}
                             required
+                            min="1"
                         />
 
                         <textarea
-                            placeholder="Описание блюда"
+                            placeholder="Описание блюда (опционально)"
                             value={dishForm.description}
                             onChange={(e) => setDishForm(prev => ({ ...prev, description: e.target.value }))}
+                            maxLength={1000}
                         />
 
                         <input
-                            type="text"
+                            type="url"
                             placeholder="URL изображения"
-                            value={dishForm.image}
-                            onChange={(e) => setDishForm(prev => ({ ...prev, image: e.target.value }))}
+                            value={dishForm.imageUrl}
+                            onChange={(e) => setDishForm(prev => ({ ...prev, imageUrl: e.target.value }))}
                         />
 
                         <input
@@ -323,51 +403,58 @@ export default function AdminPage() {
                             onChange={(e) => e.target.files[0] && handleImageUpload(e.target.files[0])}
                         />
 
-                        <button type="submit">
-                            {editingDish ? 'Обновить' : 'Добавить'} блюдо
-                        </button>
-
-                        {editingDish && (
-                            <button type="button" onClick={() => {
-                                setEditingDish(null);
-                                setDishForm({
-                                    name: '',
-                                    category: '',
-                                    price: '',
-                                    oldPrice: '',
-                                    weight: '',
-                                    kcal: '',
-                                    cookTime: '',
-                                    description: '',
-                                    image: ''
-                                });
-                            }}>
-                                Отмена
+                        <div className="form-actions">
+                            <button type="submit">
+                                {editingDish ? 'Обновить' : 'Добавить'} блюдо
                             </button>
-                        )}
+
+                            {editingDish && (
+                                <button type="button" onClick={cancelDishEdit}>
+                                    Отмена
+                                </button>
+                            )}
+                        </div>
                     </form>
 
                     <div className="dishes-list">
-                        {dishes.map(dish => (
-                            <div key={dish.id} className="dish-item">
-                                {dish.image && <img src={dish.image} alt={dish.name} />}
-                                <div className="dish-info">
-                                    <h3>{dish.name}</h3>
-                                    <p>Категория: {dish.category}</p>
-                                    <p>Цена: {dish.price}₽ {dish.oldPrice && `(было ${dish.oldPrice}₽)`}</p>
-                                    <p>{dish.weight} · {dish.kcal} ккал · {dish.cookTime} мин</p>
-                                    <p>{dish.description}</p>
+                        {dishes.length === 0 ? (
+                            <p>Блюда не найдены</p>
+                        ) : (
+                            dishes.map(dish => (
+                                <div key={dish.id} className="dish-item">
+                                    {dish.imageUrl && (
+                                        <img
+                                            src={dish.imageUrl}
+                                            alt={dish.name}
+                                            onError={(e) => {
+                                                e.target.style.display = 'none';
+                                            }}
+                                        />
+                                    )}
+                                    <div className="dish-info">
+                                        <h3>{dish.name}</h3>
+                                        <p>Категория: {dish.category}</p>
+                                        <p>Цена: {dish.price}₽</p>
+                                        <p>Время приготовления: {dish.cookTime} мин</p>
+                                        {dish.description && <p>Описание: {dish.description}</p>}
+                                    </div>
+                                    <div className="dish-actions">
+                                        <button
+                                            onClick={() => handleDishEdit(dish)}
+                                            disabled={editingDish?.id === dish.id}
+                                        >
+                                            Редактировать
+                                        </button>
+                                        <button
+                                            onClick={() => handleDishDelete(dish.id)}
+                                            className="delete-btn"
+                                        >
+                                            Удалить
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="dish-actions">
-                                    <button onClick={() => handleDishEdit(dish)}>
-                                        Редактировать
-                                    </button>
-                                    <button onClick={() => handleDishDelete(dish.id)}>
-                                        Удалить
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
                 </div>
             )}
