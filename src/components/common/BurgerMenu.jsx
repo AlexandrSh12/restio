@@ -1,9 +1,11 @@
 // src/components/common/BurgerMenu.jsx
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import '../../styles/components/burgermenu.css';
 
 export default function BurgerMenu({ isOpen, onClose, userRole }) {
     const navigate = useNavigate();
+    const { logout } = useAuth();
 
     // Конфигурация меню для каждой роли
     const menuConfig = {
@@ -14,6 +16,12 @@ export default function BurgerMenu({ isOpen, onClose, userRole }) {
             { label: 'Выйти', action: 'logout', icon: '🚪' }
         ],
         CHEF: [
+            { label: 'Кухня', path: '/chef', icon: '👨‍🍳' },
+            { label: 'Заказы', path: '/orders', icon: '📋' },
+            { label: 'Профиль', path: '/profile', icon: '👤' },
+            { label: 'Выйти', action: 'logout', icon: '🚪' }
+        ],
+        COOK: [
             { label: 'Кухня', path: '/chef', icon: '👨‍🍳' },
             { label: 'Заказы', path: '/orders', icon: '📋' },
             { label: 'Профиль', path: '/profile', icon: '👤' },
@@ -41,9 +49,8 @@ export default function BurgerMenu({ isOpen, onClose, userRole }) {
     };
 
     const handleLogout = () => {
-        // Очищаем данные авторизации
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        // Используем logout из AuthContext вместо прямого обращения к localStorage
+        logout();
         // Перенаправляем на страницу входа
         navigate('/login');
         onClose();

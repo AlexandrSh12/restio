@@ -1,14 +1,40 @@
 // src/pages/LoginPage.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../api/auth';
+import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+
     const navigate = useNavigate();
+    const { login, isAuthenticated, user } = useAuth();
+
+    // Если уже авторизован, перенаправляем
+    useEffect(() => {
+        if (isAuthenticated() && user && user.role && user.role !== 'UNKNOWN') {
+            const redirectPath = getRoleBasedPath(user.role);
+            console.log('Пользователь уже авторизован, перенаправляем на:', redirectPath);
+            navigate(redirectPath, { replace: true });
+        }
+    }, [isAuthenticated, user, navigate]);
+
+    const getRoleBasedPath = (role) => {
+        console.log('Определяем путь для роли:', role); // для отладки
+        switch (role) {
+            case 'WAITER':
+                return '/menu';
+            case 'COOK':
+            case 'CHEF':
+                return '/chef';
+            case 'ADMIN':
+                return '/menu'; // Изменено: админ тоже идет на меню
+            default:
+                return '/menu';
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -22,57 +48,49 @@ export default function LoginPage() {
             setLoading(true);
             setError('');
 
-            const response = await login(username, password);
+            const result = await login(username, password);
 
-            // Сохраняем токен в localStorage
-            localStorage.setItem('token', response.data.token);
-
-            // Сохраняем роль пользователя
-            localStorage.setItem('userRole', response.data.user.role);
-            console.log(response.data.user.role)
-
-            // Перенаправляем на соответствующую страницу в зависимости от роли
-            switch (response.data.user.role) {
-                case 'WAITER':
-                    navigate('/menu');
-                    break;
-                case 'COOK':
-                    navigate('/kitchen');
-                    break;
-                case 'ADMIN':
-                    navigate('/menu');
-                    break;
-                default:
-                    navigate('/menu');
+            if (result.success) {
+                // Перенаправление будет обработано в useEffect
+                const redirectPath = getRoleBasedPath(result.user.role);
+                navigate(redirectPath, { replace: true });
+            } else {
+                setError(result.error);
             }
         } catch (err) {
-            console.error('Ошибка авторизации:', err);
-
-            if (err.response) {
-                // Сервер ответил, но с ошибкой (например, 401 или 404)
-                if (err.response.status === 401) {
-                    setError('Неверный логин или пароль');
-                } else if (err.response.status === 404) {
-                    setError('Пользователь не найден');
-                } else {
-                    setError(`Ошибка: ${err.response.data?.message || 'Что-то пошло не так на сервере'}`);
-                }
-            } else if (err.request) {
-                // Запрос был отправлен, но нет ответа (например, нет интернета или сервер не работает)
-                setError('Нет связи с сервером. Проверьте подключение к интернету.');
-            } else {
-                // Что-то ещё пошло не так при настройке запроса
-                setError('Произошла ошибка при попытке входа. Попробуйте ещё раз.');
-            }
+            console.error('Unexpected login error:', err);
+            setError('Произошла неожиданная ошибка');
+        } finally {
+            setLoading(false);
         }
     };
+
+    // Не показываем форму если уже авторизованы
+    if (isAuthenticated()) {
+        return (
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh'
+            }}>
+                <div>Перенаправление...</div>
+            </div>
+        );
+    }
 
     return (
         <div className="container" style={{ maxWidth: '400px', margin: '0 auto', paddingTop: '50px' }}>
             <h2 style={{ textAlign: 'center', marginBottom: '30px' }}>Вход в систему</h2>
 
             {error && (
-                <div style={{ padding: '10px', background: '#ffebee', color: '#c62828', borderRadius: '4px', marginBottom: '20px' }}>
+                <div style={{
+                    padding: '10px',
+                    background: '#ffebee',
+                    color: '#c62828',
+                    borderRadius: '4px',
+                    marginBottom: '20px'
+                }}>
                     {error}
                 </div>
             )}
@@ -84,11 +102,13 @@ export default function LoginPage() {
                         type="text"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
+                        disabled={loading}
                         style={{
                             width: '100%',
                             padding: '10px',
                             borderRadius: '4px',
-                            border: '1px solid #ddd'
+                            border: '1px solid #ddd',
+                            opacity: loading ? 0.6 : 1
                         }}
                     />
                 </div>
@@ -99,11 +119,13 @@ export default function LoginPage() {
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        disabled={loading}
                         style={{
                             width: '100%',
                             padding: '10px',
                             borderRadius: '4px',
-                            border: '1px solid #ddd'
+                            border: '1px solid #ddd',
+                            opacity: loading ? 0.6 : 1
                         }}
                     />
                 </div>
@@ -114,11 +136,11 @@ export default function LoginPage() {
                     style={{
                         width: '100%',
                         padding: '12px',
-                        background: '#4caf50',
+                        background: loading ? '#cccccc' : '#4caf50',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
-                        cursor: 'pointer',
+                        cursor: loading ? 'not-allowed' : 'pointer',
                         fontSize: '16px'
                     }}
                 >

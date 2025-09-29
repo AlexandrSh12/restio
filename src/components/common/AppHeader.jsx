@@ -1,10 +1,10 @@
 // src/components/common/AppHeader.jsx
 import { useState } from 'react';
-import { getUserRole } from '../../api/auth';
+import { useAuth } from '../../context/AuthContext';
 import BurgerMenu from './BurgerMenu';
 
 export default function AppHeader({ showSearch = true }) {
-    const userRole = getUserRole();
+    const { user } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -24,6 +24,17 @@ export default function AppHeader({ showSearch = true }) {
 
     const handleCloseBurgerMenu = () => {
         setIsMenuOpen(false);
+    };
+
+    // Получаем первую букву имени пользователя для аватара
+    const getAvatarLetter = () => {
+        if (user?.fullName) {
+            return user.fullName.charAt(0).toUpperCase();
+        }
+        if (user?.username) {
+            return user.username.charAt(0).toUpperCase();
+        }
+        return 'U';
     };
 
     return (
@@ -63,7 +74,7 @@ export default function AppHeader({ showSearch = true }) {
                             aria-label="Профиль"
                         >
                             <div className="profile-avatar">
-                                <span>А</span>
+                                <span>{getAvatarLetter()}</span>
                             </div>
                         </button>
                     </div>
@@ -90,7 +101,7 @@ export default function AppHeader({ showSearch = true }) {
             <BurgerMenu
                 isOpen={isMenuOpen}
                 onClose={handleCloseBurgerMenu}
-                userRole={userRole}
+                userRole={user?.role}
             />
         </>
     );

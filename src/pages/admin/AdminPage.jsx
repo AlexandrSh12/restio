@@ -275,6 +275,42 @@ export default function AdminPage() {
                 >
                     Блюда ({dishes.length})
                 </button>
+                <button
+                    className={activeTab === 'stats' ? 'active' : ''}
+                    onClick={() => setActiveTab('stats')}
+                >
+                    Статистика ({dishes.length})
+                </button>
+                <button
+                    className={activeTab === 'staff' ? 'active' : ''}
+                    onClick={() => setActiveTab('staff')}
+                >
+                    Персонал ({dishes.length})
+                </button>
+                <button
+                    className={activeTab === 'orders' ? 'active' : ''}
+                    onClick={() => setActiveTab('orders')}
+                >
+                    Заказы ({dishes.length})
+                </button>
+                <button
+                    className={activeTab === 'settings' ? 'active' : ''}
+                    onClick={() => setActiveTab('settings')}
+                >
+                    Настройки ({dishes.length})
+                </button>
+                <button
+                    className={activeTab === 'reports' ? 'active' : ''}
+                    onClick={() => setActiveTab('reports')}
+                >
+                    Отчеты ({dishes.length})
+                </button>
+                <button
+                    className={activeTab === 'shift' ? 'active' : ''}
+                    onClick={() => setActiveTab('shift')}
+                >
+                    Смена ({dishes.length})
+                </button>
             </div>
 
             {activeTab === 'categories' && (
@@ -456,6 +492,47 @@ export default function AdminPage() {
                             ))
                         )}
                     </div>
+                </div>
+            )}
+            {activeTab === 'stats' && (
+                <div className="admin-section">
+                    <h2>Статистика</h2>
+                    {/* Здесь будет контент статистики */}
+                </div>
+            )}
+
+            {activeTab === 'staff' && (
+                <div className="admin-section">
+                    <h2>Управление персоналом</h2>
+                    {/* Здесь будет контент управления персоналом */}
+                </div>
+            )}
+
+            {activeTab === 'orders' && (
+                <div className="admin-section">
+                    <h2>Заказы</h2>
+                    {/* Здесь будет контент заказов */}
+                </div>
+            )}
+
+            {activeTab === 'settings' && (
+                <div className="admin-section">
+                    <h2>Настройки</h2>
+                    {/* Здесь будет контент настроек */}
+                </div>
+            )}
+
+            {activeTab === 'reports' && (
+                <div className="admin-section">
+                    <h2>Отчеты</h2>
+                    {/* Здесь будет контент отчетов */}
+                </div>
+            )}
+
+            {activeTab === 'shift' && (
+                <div className="admin-section">
+                    <h2>Смена</h2>
+                    {/* Здесь будет контент смены */}
                 </div>
             )}
         </div>

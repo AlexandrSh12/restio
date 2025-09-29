@@ -13,7 +13,13 @@ export default function CategoryNav({
 
     // Синхронизируем активную категорию с индексом
     useEffect(() => {
-        const index = categories.findIndex(cat => cat === activeCategory);
+        const index = categories.findIndex(cat => {
+            // Поддерживаем как объекты, так и строки
+            const catName = typeof cat === 'object' ? cat.name : cat;
+            const activeName = typeof activeCategory === 'object' ? activeCategory.name : activeCategory;
+            return catName === activeName;
+        });
+
         if (index !== -1) {
             setActiveCategoryIndex(index);
             scrollToActiveCategory(index);
@@ -44,7 +50,6 @@ export default function CategoryNav({
 
     const handleCategoryClick = (category, index) => {
         console.log('CategoryNav: клик по категории', category);
-
         setActiveCategoryIndex(index);
 
         // Вызываем родительский обработчик
@@ -61,15 +66,21 @@ export default function CategoryNav({
                 ref={navRef}
                 className="category-nav-scroll"
             >
-                {categories.map((category, index) => (
-                    <button
-                        key={category}
-                        className={`category-btn ${index === activeCategoryIndex ? 'active' : ''}`}
-                        onClick={() => handleCategoryClick(category, index)}
-                    >
-                        {category}
-                    </button>
-                ))}
+                {categories.map((category, index) => {
+                    // Поддерживаем как объекты, так и строки
+                    const categoryName = typeof category === 'object' ? category.name : category;
+                    const categoryKey = typeof category === 'object' ? category.id : category;
+
+                    return (
+                        <button
+                            key={categoryKey}
+                            className={`category-btn ${index === activeCategoryIndex ? 'active' : ''}`}
+                            onClick={() => handleCategoryClick(category, index)}
+                        >
+                            {categoryName}
+                        </button>
+                    );
+                })}
             </div>
         </div>
     );

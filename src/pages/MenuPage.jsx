@@ -1,4 +1,4 @@
-// src/pages/MenuPage.jsx (исправленная версия)
+// src/pages/MenuPage.jsx (исправленная версия с загрузкой категорий)
 import { useRef, useState, useEffect } from 'react';
 import { useOrder } from '../context/OrderContext';
 import DishCard from '../components/menu/DishCard';
@@ -7,6 +7,7 @@ import MenuHeader from '../components/menu/MenuHeader';
 import CategoryNav from '../components/menu/CategoryNav';
 import OrdersPage from './OrdersPage';
 import { fetchDishes } from '../api/dishes';
+import { fetchCategories } from '../api/categories'; // Добавляем импорт
 import { useLocalStorage } from "../hooks/useLocalStorage.js";
 
 export default function MenuPage() {
@@ -14,6 +15,7 @@ export default function MenuPage() {
     const { draft, handleAdd } = useOrder();
     const refs = useRef({});
     const [menu, setMenu] = useState([]);
+    const [categories, setCategories] = useState([]); // Отдельное состояние для категорий
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -29,25 +31,32 @@ export default function MenuPage() {
 
     // Загрузка данных с сервера
     useEffect(() => {
-        const loadDishes = async () => {
+        const loadData = async () => {
             try {
                 setLoading(true);
-                const response = await fetchDishes();
-                setMenu(response.data);
+
+                // Загружаем категории и блюда параллельно
+                const [categoriesResponse, dishesResponse] = await Promise.all([
+                    fetchCategories(),
+                    fetchDishes()
+                ]);
+
+                console.log('Загружены категории:', categoriesResponse.data);
+                console.log('Загружены блюда:', dishesResponse.data);
+
+                setCategories(categoriesResponse.data);
+                setMenu(dishesResponse.data);
                 setError(null);
             } catch (err) {
-                console.error('Ошибка при загрузке блюд:', err);
+                console.error('Ошибка при загрузке данных:', err);
                 setError('Не удалось загрузить меню. Пожалуйста, попробуйте позже.');
             } finally {
                 setLoading(false);
             }
         };
 
-        loadDishes();
+        loadData();
     }, []);
-
-    // Получаем уникальные категории из загруженных блюд
-    const categories = [...new Set(menu.map(d => d.category))];
 
     // Устанавливаем первую категорию как активную при загрузке
     useEffect(() => {
@@ -71,11 +80,12 @@ export default function MenuPage() {
             setIsHeaderSticky(scrollTop > 100);
 
             // Определяем активную категорию по скроллу
-            let currentCategory = '';
+            let currentCategory = null;
             const threshold = headerHeight + 100;
 
             for (const category of categories) {
-                const element = refs.current[category];
+                const categoryName = typeof category === 'object' ? category.name : category;
+                const element = refs.current[categoryName];
                 if (element) {
                     const rect = element.getBoundingClientRect();
                     const containerRect = containerRef.current.getBoundingClientRect();
@@ -101,7 +111,8 @@ export default function MenuPage() {
     const scrollToCategory = (category) => {
         console.log('Клик по категории:', category);
 
-        const element = refs.current[category];
+        const categoryName = typeof category === 'object' ? category.name : category;
+        const element = refs.current[categoryName];
         const container = containerRef.current;
 
         console.log('Element найден:', !!element);
@@ -177,27 +188,32 @@ export default function MenuPage() {
                 {activeTab === 'create' ? (
                     <div className="menu-content">
                         {/* Список блюд по категориям */}
-                        {categories.map(category => (
-                            <div
-                                key={category}
-                                ref={el => (refs.current[category] = el)}
-                                className="category-section"
-                            >
-                                <h3 className="category-title">{category}</h3>
-                                <div className="dishes-grid">
-                                    {menu
-                                        .filter(dish => dish.category === category)
-                                        .map(dish => (
-                                            <DishCard
-                                                key={dish.id}
-                                                dish={dish}
-                                                count={draft.items[dish.id]?.count || 0}
-                                                onAdd={handleAdd}
-                                            />
-                                        ))}
+                        {categories.map(category => {
+                            const categoryName = typeof category === 'object' ? category.name : category;
+                            const categoryId = typeof category === 'object' ? category.id : category;
+
+                            return (
+                                <div
+                                    key={categoryId}
+                                    ref={el => (refs.current[categoryName] = el)}
+                                    className="category-section"
+                                >
+                                    <h3 className="category-title">{categoryName}</h3>
+                                    <div className="dishes-grid">
+                                        {menu
+                                            .filter(dish => dish.category === categoryName || dish.categoryId === categoryId)
+                                            .map(dish => (
+                                                <DishCard
+                                                    key={dish.id}
+                                                    dish={dish}
+                                                    count={draft.items[dish.id]?.count || 0}
+                                                    onAdd={handleAdd}
+                                                />
+                                            ))}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 ) : (
                     <div className="orders-content">

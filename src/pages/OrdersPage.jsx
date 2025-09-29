@@ -1,11 +1,12 @@
 // src/pages/OrdersPage.jsx
 import { useState, useEffect } from 'react';
-import { getOrderStatus } from '../api/orders';
+import { getAllOrders, updateOrderStatus } from '../api/orders';
 
 export default function OrdersPage() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [updatingOrder, setUpdatingOrder] = useState(null);
 
     useEffect(() => {
         loadOrders();
@@ -14,45 +15,41 @@ export default function OrdersPage() {
     const loadOrders = async () => {
         try {
             setLoading(true);
-            // TODO: Implement API call to get all orders for current waiter
-            // For now, we'll use mock data
-            const mockOrders = [
-                {
-                    id: 1,
-                    number: '001',
-                    status: 'preparing',
-                    createdAt: new Date().toISOString(),
-                    total: 1250,
-                    items: [
-                        { name: 'Бургер', count: 2, price: 450 },
-                        { name: 'Картофель фри', count: 1, price: 350 }
-                    ]
-                },
-                {
-                    id: 2,
-                    number: '002',
-                    status: 'ready',
-                    createdAt: new Date(Date.now() - 30 * 60000).toISOString(),
-                    total: 890,
-                    items: [
-                        { name: 'Пицца Маргарита', count: 1, price: 890 }
-                    ]
-                }
-            ];
-            setOrders(mockOrders);
+            const response = await getAllOrders();
+            setOrders(response.data);
             setError(null);
         } catch (err) {
             setError('Ошибка загрузки заказов');
-            console.error(err);
+            console.error('Ошибка при загрузке заказов:', err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleCompleteOrder = async (orderId) => {
+        try {
+            setUpdatingOrder(orderId);
+            await updateOrderStatus(orderId, 'completed');
+            // Обновляем локальное состояние
+            setOrders(prevOrders =>
+                prevOrders.map(order =>
+                    order.id === orderId
+                        ? { ...order, status: 'completed' }
+                        : order
+                )
+            );
+        } catch (err) {
+            console.error('Ошибка при обновлении статуса заказа:', err);
+            // Можно показать уведомление об ошибке
+        } finally {
+            setUpdatingOrder(null);
         }
     };
 
     const getStatusText = (status) => {
         const statusMap = {
             'draft': 'Черновик',
-            'pending': 'Ожидает',
+            'submitted': 'Ожидает принятия',
             'preparing': 'Готовится',
             'ready': 'Готов',
             'completed': 'Завершен',
@@ -65,12 +62,8 @@ export default function OrdersPage() {
         return `order-status order-status-${status}`;
     };
 
-    const formatTime = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleTimeString('ru-RU', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+    const calculateOrderTotal = (items) => {
+        return items.reduce((total, item) => total + (item.price * item.count), 0);
     };
 
     if (loading) {
@@ -78,16 +71,23 @@ export default function OrdersPage() {
     }
 
     if (error) {
-        return <div className="orders-container">{error}</div>;
+        return (
+            <div className="orders-container">
+                <div className="error-message">{error}</div>
+                <button onClick={loadOrders} className="btn-primary">
+                    Попробовать снова
+                </button>
+            </div>
+        );
     }
 
     return (
         <div className="orders-container">
-            <h2>Мои заказы</h2>
+            <h2>Заказы</h2>
 
             {orders.length === 0 ? (
                 <div className="empty-orders">
-                    <p>У вас пока нет заказов</p>
+                    <p>Заказов пока нет</p>
                 </div>
             ) : (
                 <div className="orders-list">
@@ -95,7 +95,7 @@ export default function OrdersPage() {
                         <div key={order.id} className="order-card">
                             <div className="order-header">
                                 <div className="order-number">
-                                    Заказ #{order.number}
+                                    Заказ #{order.orderNumber}
                                 </div>
                                 <div className={getStatusClass(order.status)}>
                                     {getStatusText(order.status)}
@@ -103,19 +103,21 @@ export default function OrdersPage() {
                             </div>
 
                             <div className="order-meta">
-                                <span className="order-time">
-                                    {formatTime(order.createdAt)}
-                                </span>
                                 <span className="order-total">
-                                    {order.total}₽
+                                    {calculateOrderTotal(order.items)}₽
                                 </span>
+                                {order.comment && (
+                                    <span className="order-comment">
+                                        Комментарий: {order.comment}
+                                    </span>
+                                )}
                             </div>
 
                             <div className="order-items">
                                 {order.items.map((item, index) => (
                                     <div key={index} className="order-item">
                                         <span className="item-name">
-                                            {item.name}
+                                            {item.dishName}
                                         </span>
                                         <span className="item-quantity">
                                             x{item.count}
@@ -137,9 +139,10 @@ export default function OrdersPage() {
                                 {order.status === 'ready' && (
                                     <button
                                         className="btn-primary"
-                                        onClick={() => console.log('Complete order', order.id)}
+                                        onClick={() => handleCompleteOrder(order.id)}
+                                        disabled={updatingOrder === order.id}
                                     >
-                                        Выдать
+                                        {updatingOrder === order.id ? 'Обновление...' : 'Выдать'}
                                     </button>
                                 )}
                             </div>

@@ -13,7 +13,10 @@ export default function ConfirmOrderPage() {
         try {
             const res = await createOrder({
                 clientId: draft.id,
-                items: Object.values(draft.items)
+                items: Object.values(draft.items).map(item => ({
+                    dishId: item.id,
+                    count: item.count
+                }))
             });
             clearOrder();
             navigate('/success', { state: { orderNumber: res.data.orderNumber } });
