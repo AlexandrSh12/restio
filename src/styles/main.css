@@ -551,6 +551,16 @@ body {
     box-shadow: 0 6px 16px rgba(39, 174, 96, 0.4);
 }
 
+.order-bar .btn--success {
+    background: var(--success-color);
+    color: white;
+    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
+.order-bar .btn--secondary {
+    background: var(--primary-color);
+    box-shadow: none;
+}
 /* === СТРАНИЦА ЗАКАЗОВ === */
 .orders-container {
     padding: var(--spacing-md);

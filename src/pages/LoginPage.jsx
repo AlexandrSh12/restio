@@ -39,6 +39,20 @@ export default function LoginPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Мок-режим: admin/admin
+        if (import.meta.env.VITE_API_URL.includes('localhost:3000')) {
+            if (username === 'admin' && password === 'admin') {
+                const mockUser = { username: 'admin', role: 'ADMIN' };
+                localStorage.setItem('token', 'mock-token');
+                localStorage.setItem('userRole', 'ADMIN');
+                setToken('mock-token');
+                setUser(mockUser);
+                return { success: true, user: mockUser };
+            } else {
+                return { success: false, error: 'Для мок-режима используйте admin/admin' };
+            }
+        }
+
         if (!username || !password) {
             setError('Пожалуйста, введите логин и пароль');
             return;

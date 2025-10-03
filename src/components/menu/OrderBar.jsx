@@ -76,8 +76,8 @@ export default function OrderBar() {
                     <div className="modal">
                         <p>Вы уверены, что хотите сбросить заказ?</p>
                         <div className="modal-buttons">
-                            <button onClick={() => setShowConfirm(false)}>Отмена</button>
-                            <button onClick={handleReset}>Сбросить</button>
+                            <button className="btn--secondary" onClick={() => setShowConfirm(false)}>Отмена</button>
+                            <button className="btn--success" onClick={handleReset}>Сбросить</button>
                         </div>
                     </div>
                 </div>
